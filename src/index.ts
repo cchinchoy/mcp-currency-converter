@@ -4,12 +4,18 @@ import {z} from "zod";
 import type {CurrencyConversionResult} from "./types/currencyTypes.js";
 import {currencyCodeSchema, exchangeRateSchema} from "./schemas/currencySchemas.js";
 import { getExchangeRate } from "./services/currencyService.js";
+import { logger } from "./utils/logger.js";
+import { getErrorMessage } from "./utils/errorUtils.js";
 
 
 const server = new McpServer({
     name: "currency-mcp-server",
-    version: "1.4.0",
+    version: "1.5.0",
 });
+logger.info("Starting Currency MCP Server...", {
+    version: "1.5.0",
+});
+
 
 server.registerTool(
     "get_exchange_rate",
@@ -22,6 +28,12 @@ server.registerTool(
     async ({from, to}) => {
         try {
             const result = await getExchangeRate(from, to);
+            logger.info("Exchange rate lookup successful", {
+                from: result.from,
+                to: result.to,
+                rate: result.rate,
+                date: result.date,
+            });
 
             return {
                 content: [
@@ -36,7 +48,8 @@ server.registerTool(
                 structuredContent: result,
             };
         } catch (error) {
-            const message = error instanceof Error ? error.message: "Unknown error occurred.";
+            const message = getErrorMessage(error);
+            logger.error("Exchange rate Lookup failed", {error: message,});
 
             return {
                 isError: true,
@@ -83,6 +96,16 @@ server.registerTool(
                 date: exchangeRate.date,
             }
 
+            logger.info("Currency conversion successful", {
+                amount: result.amount,
+                from: result.from,
+                to: result.to,
+                rate: result.rate,
+                convertedAmount: result.convertedAmount,
+                date: result.date,
+            });
+
+            
             return {
                 content: [
                     {
@@ -97,7 +120,9 @@ server.registerTool(
                 structuredContent: result,
             };
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Unknown error occurred.";
+            const message = getErrorMessage(error);
+
+            logger.error("Currency conversion failed", {error: message,});
 
             return {
                 isError: true,
