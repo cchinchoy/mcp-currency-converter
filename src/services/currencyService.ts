@@ -1,4 +1,4 @@
-import type {ExchangeRateResult, FrankFurterRateResponse} from "../types/currencyTypes.js";
+import type {ExchangeRateResult, FrankFurterRateResponse, SupportedCurrenciesResult} from "../types/currencyTypes.js";
 
 import {getCurrentDateString} from "../utils/dateUtils.js";
 
@@ -39,5 +39,27 @@ export async function getExchangeRate(from: string, to: string): Promise<Exchang
         to: targetCurrency,
         rate: data.rate,
         date: getCurrentDateString(),
+    };
+}
+
+export async function getSupportedCurrencies(): Promise<SupportedCurrenciesResult> {
+    const url = `${appConfig.currencyApiBaseUrl}/currencies`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(`Currency API request failed with status` + `${response.status}: ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as Record<string, string>;
+
+    const currencies = Object.entries(data).map(([code, name]) => ({
+        code: code.toUpperCase(),
+        name,
+    }));
+
+    return {
+        currencies,
+        count: currencies.length,
     };
 }
