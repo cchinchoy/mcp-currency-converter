@@ -1,93 +1,22 @@
 import {McpServer} from "@modelcontextprotocol/sdk/server/mcp"
 import {StdioServerTransport} from "@modelcontextprotocol/sdk/server/stdio"
 import {z} from "zod";
+import type {CurrencyConversionResult} from "./types/currencyTypes.js";
+import {currencyCodeSchema, exchangeRateSchema} from "./schemas/currencySchemas.js";
+import { getExchangeRate } from "./services/currencyService.js";
+
 
 const server = new McpServer({
     name: "currency-mcp-server",
-    version: "1.2.0",
+    version: "1.3.0",
 });
-
-type FrankFurterResponse = {
-    date: string;
-    base: string;
-    quote: string;
-    rate: number;
-}
-
-type ExchangeRateResult = {
-    from: string,
-    to: string,
-    rate: number,
-    date: string,
-}
-
-type CurrencyConversionResult = {
-    amount: number,
-    from: string,
-    to: string,
-    rate: number,
-    convertedAmount: number,
-    date: string,
-}
-
-const currencyCodeSchema = z
-.string()
-.length(3)
-.transform((value) => value.toUpperCase());
-
-
-async function getExchangeRate(from: string, to: string): Promise<ExchangeRateResult> {
-    const sourceCurrency = from.toUpperCase();
-    const targetCurrency = to.toUpperCase();
-
-    if(sourceCurrency === targetCurrency){
-        return{
-            from: sourceCurrency,
-            to: targetCurrency,
-            rate: 1,
-            date: new Date().toISOString().slice(0,10),
-        };
-    }
-
-
-    const url = `https://api.frankfurter.dev/v2/rate/${sourceCurrency}/${targetCurrency}`;
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-        throw new Error(
-            `Currency API request failed with status ${response.status}: ${response.statusText}`
-        );
-    }
-
-    const data = (await response.json()) as FrankFurterResponse;
-
-    const rate = data.rate;
-
-    if(!rate) {
-        throw new Error(
-            `No Exchange rate found for ${sourceCurrency} to ${targetCurrency}.`
-        );
-    }
-
-
-    return {
-        from: data.base.toUpperCase(),
-        to: data.quote.toUpperCase(),
-        rate: data.rate,
-        date: data.date,
-    };
-}
 
 server.registerTool(
     "get_exchange_rate",
     {
         description: "Get the live Exchange Rate between two currencies.",
 
-        inputSchema:{
-            from: currencyCodeSchema,
-            to: currencyCodeSchema,
-        },
+        inputSchema:exchangeRateSchema,
     },
 
     async ({from, to}) => {
