@@ -2,6 +2,9 @@ import type {ExchangeRateResult, FrankFurterRateResponse} from "../types/currenc
 
 import {getCurrentDateString} from "../utils/dateUtils.js";
 
+import { appConfig } from "../config/appConfig.js";
+
+
 export async function getExchangeRate(from: string, to: string): Promise<ExchangeRateResult> {
     const sourceCurrency = from.toUpperCase();
     const targetCurrency = to.toUpperCase();
@@ -15,7 +18,7 @@ export async function getExchangeRate(from: string, to: string): Promise<Exchang
         };
     }
         
-    const url = `https://api.frankfurter.dev/v2/rate/${sourceCurrency}/${targetCurrency}`;
+    const url = `${appConfig.currencyApiBaseUrl}/rate/${sourceCurrency}/${targetCurrency}`;
 
     const response = await fetch(url);
 

@@ -8,7 +8,7 @@ import { getExchangeRate } from "./services/currencyService.js";
 
 const server = new McpServer({
     name: "currency-mcp-server",
-    version: "1.3.0",
+    version: "1.4.0",
 });
 
 server.registerTool(
